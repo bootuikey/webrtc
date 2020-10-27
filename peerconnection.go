@@ -338,7 +338,10 @@ func (pc *PeerConnection) checkNegotiationNeeded() bool { //nolint:gocognit
 		return true
 	}
 
-	for _, t := range pc.GetTransceivers() {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+
+	for _, t := range pc.rtpTransceivers {
 		// https://www.w3.org/TR/webrtc/#dfn-update-the-negotiation-needed-flag
 		// Step 5.1
 		// if t.stopping && !t.stopped {
@@ -881,7 +884,7 @@ func (pc *PeerConnection) setDescription(sd *SessionDescription, op stateChangeO
 			return nextState, &rtcerr.OperationError{Err: fmt.Errorf("%w: %q", errPeerConnStateChangeUnhandled, op)}
 		}
 
-		return nextState, nil
+		return nextState, err
 	}()
 
 	if err == nil {
@@ -961,8 +964,7 @@ func (pc *PeerConnection) SetRemoteDescription(desc SessionDescription) error { 
 
 	isRenegotation := pc.currentRemoteDescription != nil
 
-	desc.parsed = &sdp.SessionDescription{}
-	if err := desc.parsed.Unmarshal([]byte(desc.SDP)); err != nil {
+	if _, err := desc.Unmarshal(); err != nil {
 		return err
 	}
 	if err := pc.setDescription(&desc, stateChangeOpSetRemote); err != nil {
@@ -1006,6 +1008,8 @@ func (pc *PeerConnection) SetRemoteDescription(desc SessionDescription) error { 
 					return err
 				}
 				t = pc.newRTPTransceiver(receiver, nil, RTPTransceiverDirectionRecvonly, kind)
+
+				pc.onNegotiationNeeded()
 			}
 			if t.Mid() == "" {
 				if err := t.setMid(midValue); err != nil {
@@ -1616,7 +1620,9 @@ func (pc *PeerConnection) AddTransceiverFromTrack(track *Track, init ...RtpTrans
 			RTPTransceiverDirectionSendrecv,
 			track.Kind(),
 		)
+
 		pc.onNegotiationNeeded()
+
 		return t, nil
 
 	case RTPTransceiverDirectionSendonly:
@@ -1631,7 +1637,9 @@ func (pc *PeerConnection) AddTransceiverFromTrack(track *Track, init ...RtpTrans
 			RTPTransceiverDirectionSendonly,
 			track.Kind(),
 		)
+
 		pc.onNegotiationNeeded()
+
 		return t, nil
 	default:
 		return nil, errPeerConnAddTransceiverFromTrackOneTransceiver
@@ -1827,8 +1835,6 @@ func (pc *PeerConnection) newRTPTransceiver(
 	pc.mu.Lock()
 	pc.rtpTransceivers = append(pc.rtpTransceivers, t)
 	pc.mu.Unlock()
-
-	pc.onNegotiationNeeded()
 
 	return t
 }
