@@ -111,14 +111,14 @@ function getRemoteSdp() {
     data: btoa(pc.localDescription.sdp),
   }, function(data) {
     try {
-      pc.setRemoteDescription(new RTCSessionDescription({
-        type: 'answer',
-        sdp: atob(data)
-      }))
       $('#remoteSessionDescription').val(data);
       if(data == ""){
         $('#localSessionDescription').val("");
       }else{
+        pc.setRemoteDescription(new RTCSessionDescription({
+          type: 'answer',
+          sdp: atob(data)
+        }))
         $('#localSessionDescription').val(btoa(pc.localDescription.sdp));
       }
     } catch (e) {
