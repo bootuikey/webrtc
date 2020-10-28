@@ -39,7 +39,7 @@ async function handleNegotiationNeededEvent() {
 
 $(document).ready(function() {
   // $('#' + suuid).addClass('active');
-  connectRtsp();
+  // connectRtsp();
 });
 
 // pc.ondatachannel = function(event) {
