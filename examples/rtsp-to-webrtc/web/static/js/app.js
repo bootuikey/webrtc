@@ -3,9 +3,9 @@ let baseUrl = "rtsp-api";
 // let baseUrl = "";
 
 let config = {
-  iceServers: [{
-    urls: ["stun:101.200.83.51:3478"]
-  }]
+  iceServers: [    {'url': 'turn:101.200.83.51:3478?transport=udp',
+    'credential':'admin123',
+    'username':'admin'}]
 };
 
 const pc = new RTCPeerConnection(config);
@@ -26,7 +26,7 @@ pc.ontrack = function(event) {
   document.getElementById('remoteVideos').appendChild(el)
 }
 
-pc.oniceconnectionstatechange = e => log(pc.iceConnectionState)
+pc.oniceconnectionstatechange = e => log("======"+pc.iceConnectionState)
 
 
 
@@ -71,17 +71,17 @@ function getCodecInfo() {
       pc.addTransceiver('video', {
         'direction': 'sendrecv'
       });
-      var dataChannelOptions = {
-        reliable: true,
-        maxRetransmitTime: "2000"
-      };
 
       //send ping becouse PION not handle RTCSessionDescription.close()
-      sendChannel = pc.createDataChannel('foo',dataChannelOptions);
+      sendChannel = pc.createDataChannel('foo');
       console.log('foo channel has start');
+      console.log("=======", sendChannel.binaryType);
       sendChannel.onclose = () => console.log('sendChannel has closed');
-      sendChannel.onopen = () => {
-        console.log('sendChannel has opened');
+      sendChannel.onerror = function (error) {
+        console.log("dataChannel.OnError:", error);
+      };
+      sendChannel.onopen = function (event) {
+        console.log('sendChannel has opened',event);
         sendChannel.send('ping');
         setInterval(() => {
           sendChannel.send('ping');
