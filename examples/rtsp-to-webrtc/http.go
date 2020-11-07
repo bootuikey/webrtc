@@ -153,7 +153,7 @@ func reciver(c *gin.Context) {
 		peerConnection, err := api.NewPeerConnection(webrtc.Configuration{
 			ICEServers: []webrtc.ICEServer{
 				{
-					URLs: []string{"stun:101.200.83.51:3478"},
+					URLs: []string{"turn:101.200.83.51:3478"}, Username: "admin", Credential: "admin123",
 				},
 			},
 		})
@@ -161,6 +161,8 @@ func reciver(c *gin.Context) {
 			log.Println("NewPeerConnection error", err)
 			return
 		}
+		log.Println("===============peerConnection state", peerConnection.ConnectionState())
+
 		/*
 
 			ADD KeepAlive Timer
@@ -249,72 +251,72 @@ func reciver(c *gin.Context) {
 			return
 		}
 		control := make(chan bool, 10)
-		peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-			log.Printf("Connection State has changed %s \n", connectionState.String())
-			if connectionState != webrtc.ICEConnectionStateConnected {
-				log.Println("Client Close Exit")
-				err := peerConnection.Close()
-				if err != nil {
-					log.Println("peerConnection Close error", err)
-				}
-				control <- true
-				return
-			}
-			if connectionState == webrtc.ICEConnectionStateConnected {
-				go func() {
-					cuuid, ch := Config.clAd(suuid)
-					log.Println("start stream", suuid, "client", cuuid)
-					defer func() {
-						log.Println("stop stream", suuid, "client", cuuid)
-						defer Config.clDe(suuid, cuuid)
-					}()
-					var Vpre time.Duration
-					var start bool
-					timer1.Reset(5 * time.Second)
-					for {
-						select {
-						case <-timer1.C:
-							log.Println("Client Close Keep-Alive Timer")
-							peerConnection.Close()
-						case <-control:
-							return
-						case pck := <-ch:
-							//timer1.Reset(2 * time.Second)
-							if pck.IsKeyFrame {
-								start = true
-							}
-							if !start {
-								continue
-							}
-							if pck.IsKeyFrame {
-								pck.Data = append([]byte("\000\000\001"+string(sps)+"\000\000\001"+string(pps)+"\000\000\001"), pck.Data[4:]...)
+		//peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+		//	log.Printf("Connection State has changed %s \n", connectionState.String())
+		//	if connectionState != webrtc.ICEConnectionStateConnected {
+		//		log.Println("Client Close Exit")
+		//		err := peerConnection.Close()
+		//		if err != nil {
+		//			log.Println("peerConnection Close error", err)
+		//		}
+		//		control <- true
+		//		return
+		//	}
+		//	if connectionState == webrtc.ICEConnectionStateConnected {
+		go func() {
+			cuuid, ch := Config.clAd(suuid)
+			log.Println("start stream", suuid, "client", cuuid)
+			defer func() {
+				log.Println("stop stream", suuid, "client", cuuid)
+				defer Config.clDe(suuid, cuuid)
+			}()
+			var Vpre time.Duration
+			var start bool
+			timer1.Reset(5 * time.Second)
+			for {
+				select {
+				case <-timer1.C:
+					log.Println("Client Close Keep-Alive Timer")
+					peerConnection.Close()
+				case <-control:
+					return
+				case pck := <-ch:
+					//timer1.Reset(2 * time.Second)
+					if pck.IsKeyFrame {
+						start = true
+					}
+					if !start {
+						continue
+					}
+					if pck.IsKeyFrame {
+						pck.Data = append([]byte("\000\000\001"+string(sps)+"\000\000\001"+string(pps)+"\000\000\001"), pck.Data[4:]...)
 
-							} else {
-								pck.Data = pck.Data[4:]
-							}
-							var Vts time.Duration
-							if pck.Idx == 0 && videoTrack != nil {
-								if Vpre != 0 {
-									Vts = pck.Time - Vpre
-								}
-								samples := uint32(90000 / 1000 * Vts.Milliseconds())
-								err := videoTrack.WriteSample(media.Sample{Data: pck.Data, Samples: samples})
-								if err != nil {
-									return
-								}
-								Vpre = pck.Time
-							} else if pck.Idx == 1 && audioTrack != nil {
-								err := audioTrack.WriteSample(media.Sample{Data: pck.Data, Samples: uint32(len(pck.Data))})
-								if err != nil {
-									return
-								}
-							}
+					} else {
+						pck.Data = pck.Data[4:]
+					}
+					var Vts time.Duration
+					if pck.Idx == 0 && videoTrack != nil {
+						if Vpre != 0 {
+							Vts = pck.Time - Vpre
+						}
+						samples := uint32(90000 / 1000 * Vts.Milliseconds())
+						err := videoTrack.WriteSample(media.Sample{Data: pck.Data, Samples: samples})
+						if err != nil {
+							return
+						}
+						Vpre = pck.Time
+					} else if pck.Idx == 1 && audioTrack != nil {
+						err := audioTrack.WriteSample(media.Sample{Data: pck.Data, Samples: uint32(len(pck.Data))})
+						if err != nil {
+							return
 						}
 					}
-
-				}()
+				}
 			}
-		})
+
+		}()
+		//	}
+		//})
 		return
 	}
 }
