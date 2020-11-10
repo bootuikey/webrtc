@@ -12,30 +12,23 @@
     Play Stream demo
 </h2>
 <div class="container">
-  <div class="row">
-    <div class="col-3">
-      <div class="list-group">
-</div>
-    </div>
-        <div>
-            rtsp url<br />
-            <input id="rtspUrl" value="rtsp://101.200.83.51/test"></input><br />
-            <br />
-
-
-         Browser base64 Session localSessionDescription<br />
-         <textarea id="localSessionDescription" readonly="true" style="width: 500px;min-height: 75px;"></textarea><br />
-<br />
-
-          Browser base64 Session remoteSessionDescription<br />
-         <textarea id="remoteSessionDescription"  readonly="true" style="width: 500px;min-height: 75px;"></textarea><br />
-
-<br />
-
-            <br />
-           <div id="remoteVideos"></div>
-           <button onclick="getCodecInfo()"> Start Session </button>
-           <div id="div"></div>
+    <div class="row">
+        <div class="col-3">
+            <div class="list-group">
+            </div>
+        </div>
+        <div><br/>
+            <input type="hidden" id="rtspUrl" value="rtsp://101.200.83.51/test"></input><br/>
+            <span style="display:none">Browser base64 Session localSessionDescription</span><br/>
+            <textarea id="localSessionDescription" readonly="true"
+                      style="width: 500px;min-height: 75px;display:none"></textarea><br/>
+            <span style="display:none">Browser base64 Session remoteSessionDescription</span><br/>
+            <textarea id="remoteSessionDescription" readonly="true"
+                      style="width: 500px;min-height: 75px;display:none"></textarea><br/>
+            <br/>
+            <div id="remoteVideos"></div>
+            <button onclick="getCodecInfo()"> Start Session</button>
+            <div id="div"></div>
         </div>
     </div>
 </div>
