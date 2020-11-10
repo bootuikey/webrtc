@@ -16,7 +16,7 @@ func main() {
 	var rtspUrlName string
 	for idx, args := range os.Args {
 		fmt.Println("参数"+strconv.Itoa(idx)+":", args)
-		if idx == 1 {
+		if idx == 2 {
 			flag = true
 			rtspUrlName = args
 		}
