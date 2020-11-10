@@ -4,10 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
-
+	"github.com/deepch/RTSPtoWebRTC/asset"
 	"github.com/deepch/vdk/av"
+	//assetfs "github.com/elazarl/go-bindata-assetfs"
+	//"io/ioutil"
+	"log"
 )
 
 //Config global
@@ -37,7 +38,8 @@ type viwer struct {
 
 func loadConfig() *ConfigST {
 	var tmp ConfigST
-	data, err := ioutil.ReadFile("config.json")
+	//data, err := ioutil.ReadFile("config.json")
+	data, err := asset.Asset("config/config.json")
 	if err != nil {
 		log.Fatalln(err)
 	}

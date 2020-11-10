@@ -73,6 +73,7 @@ func serveHTTP() {
 	})
 	//router.StaticFS("/static", http.Dir("web/static"))
 	err := router.Run(Config.Server.HTTPPort)
+	//err := router.Run()
 	if err != nil {
 		log.Fatalln("Start HTTP Server error", err)
 	}

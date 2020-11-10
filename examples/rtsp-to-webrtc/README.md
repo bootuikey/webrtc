@@ -64,3 +64,16 @@ format:
 Video Codecs Supported: H264
 
 Audio Codecs Supported: pcm alaw and pcm mulaw 
+
+
+
+
+
+执行命令将静态文件打包成go文件
+
+go-bindata -o=./asset/asset.go -pkg=asset config/...
+
+
+启动参数：RTSPtoWebRTC.exe rtsp://101.200.83.51/test
+
+打包命令: go build
