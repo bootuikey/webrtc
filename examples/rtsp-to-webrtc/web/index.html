@@ -1,4 +1,9 @@
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>模拟弹幕</title>
+    <link rel="stylesheet" type="text/css" href="css/bilibili.css">
+</head>
 <meta http-equiv="Expires" content="0">
 <meta http-equiv="Last-Modified" content="0">
 <meta http-equiv="Cache-Control" content="no-cache, mustrevalidate">
@@ -12,25 +17,42 @@
     Play Stream demo
 </h2>
 <div class="container">
-    <div class="row">
-        <div class="col-3">
-            <div class="list-group">
-            </div>
-        </div>
-        <div><br/>
-            <input type="hidden" id="rtspUrl" value="rtsp://101.200.83.51/test"></input><br/>
-            <span style="display:none">Browser base64 Session localSessionDescription</span><br/>
-            <textarea id="localSessionDescription" readonly="true"
-                      style="width: 500px;min-height: 75px;display:none"></textarea><br/>
-            <span style="display:none">Browser base64 Session remoteSessionDescription</span><br/>
-            <textarea id="remoteSessionDescription" readonly="true"
-                      style="width: 500px;min-height: 75px;display:none"></textarea><br/>
-            <br/>
-            <div id="remoteVideos"></div>
-            <button onclick="getCodecInfo()"> Start Session</button>
-            <div id="div"></div>
-        </div>
+    <div class="col-3">
+        <img src="demo2.png" style="width: 6rem;height: 3rem">
+        <span>弹幕内容：<input type="text" name="content" id="bilibili_content"></span><br>
+        <span>
+                <span>弹幕颜色：</span>
+                正常:<input type="radio" name="text_color" value="white" checked="checked">
+                红色:<input type="radio" name="text_color" value="red">
+                黄色:<input type="radio" name="text_color" value="yellow">
+                蓝色:<input type="radio" name="text_color" value="blue">
+                </span><br>
+        <span>
+            <span>弹幕位置：</span>
+            <!--                正上方:<input type="radio" name="text_loc" value="top">-->
+            <!-- 正下方:<input type="radio" name="text_loc" value="lower"> -->
+            正常:<input type="radio" name="text_loc" value="normal" checked="checked">
+            </span><br>
+        <button id="send" onclick="send()">发送</button>
+    </div>
+    <div>
+        <div id="remoteVideos" style="width: 650px; height: 250px; position: relative; z-index: 10; "></div>
+        <button onclick="getCodecInfo()"> Start Session</button>
+        <div id="div"></div>
+    </div>
+    <div>
+        <input type="hidden" id="rtspUrl" value="rtsp://101.200.83.51/test"></input><br/>
+        <span style="display:none">Browser base64 Session localSessionDescription</span><br/>
+        <textarea id="localSessionDescription" readonly="true"
+                  style="width: 500px;min-height: 75px;display:none"></textarea><br/>
+        <span style="display:none">Browser base64 Session remoteSessionDescription</span><br/>
+        <textarea id="remoteSessionDescription" readonly="true"
+                  style="width: 500px;min-height: 75px;display:none"></textarea><br/>
+        <br/>
     </div>
 </div>
-<script type="text/javascript" src="/static/js/app.js"></script>
+</div>
+<script type="text/javascript" src="/static/js/app.js">
+</script>
+
 </html>
