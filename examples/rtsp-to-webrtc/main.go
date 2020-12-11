@@ -22,7 +22,7 @@ func main() {
 		}
 	}
 	if rtspUrlName == "" {
-		fmt.Println("请输入rtspurl地址")
+		fmt.Println("请输入rtspurl地址!!")
 		return
 	}
 	if flag {
