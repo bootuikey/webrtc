@@ -18,7 +18,10 @@
 </h2>
 <div class="container">
     <div class="col-3">
-        <img src="demo2.png" style="width: 6rem;height: 3rem">
+        <div>
+            <input id="upload" type="file">
+            <img id="preview2" src="" style="width: 100px;height: 50px">
+        </div>
         <span>弹幕内容：<input type="text" name="content" id="bilibili_content"></span><br>
         <span>
                 <span>弹幕颜色：</span>
@@ -29,8 +32,6 @@
                 </span><br>
         <span>
             <span>弹幕位置：</span>
-            <!--                正上方:<input type="radio" name="text_loc" value="top">-->
-            <!-- 正下方:<input type="radio" name="text_loc" value="lower"> -->
             正常:<input type="radio" name="text_loc" value="normal" checked="checked">
             </span><br>
         <button id="send" onclick="send()">发送</button>

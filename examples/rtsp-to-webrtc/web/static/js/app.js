@@ -9,6 +9,23 @@ let config = {
         'username': 'admin'
     }]
 };
+$('#upload').change(function(){
+    // 获取FileList的第一个元素
+    var f = document.getElementById('upload').files[0];
+    src = window.URL.createObjectURL(f);
+    document.getElementById('preview2').src = src
+})
+
+function draw(preview){
+    var canvas = document.getElementById(preview);
+    if (!canvas.getContext) return;
+    var ctx = canvas.getContext("2d");
+    var img=document.getElementById('preview2');
+    ctx.drawImage(img, 0, 0);
+}
+// document.querySelector("img").onclick = function (){
+//
+// }
 
 const pc = new RTCPeerConnection(config);
 pc.onnegotiationneeded = handleNegotiationNeededEvent;
@@ -20,12 +37,12 @@ let log = msg => {
 pc.ontrack = function (event) {
     log(event.streams.length + ' track is delivered')
     var el = document.createElement(event.track.kind)
-    el.style="width: 650px; height: 250px; background-color:black; position:fixed;"
+    el.style="width: 650px; height: 300px; background-color:black;"
     el.srcObject = event.streams[0]
     el.muted = true
     el.autoplay = true
     el.controls = true
-    el.width = 600
+    el.width = 650
     console.log(el)
     document.getElementById('remoteVideos').appendChild(el)
 }
@@ -52,6 +69,7 @@ $(document).ready(function () {
 // };
 //发送弹幕
 function send() {
+    // var preview = document.getElementById("preview").src;
     //创建一个弹幕模板
     var _html = "";
     //获取发送的弹幕颜色
@@ -82,12 +100,14 @@ function send() {
     else if (textLoc == "normal") {
         //实例模板
         _html = "<p id='" + content_id + "' class='bilibili_txt_1' style='top:" + topVal + "px; color: white;position:absolute;right:0px; margin-top:0px; color:" + textColor + ";'>" + content + "</p>";
-        _html += "<img  id='" + content_id + "_img' class='bilibili_txt_1'  src='demo2.png' style='top:" + topVal + "px; color: white;position:absolute;width: 6rem;height: 3rem;right:0px; margin-top:0px; color:" + textColor + ";'>";
+        // _html += "<img  id='" + content_id + "_img' class='bilibili_txt_1'  src='"+preview+"' style='top:" + topVal + "px; color: white;position:absolute;width: 6rem;height: 3rem;right:0px; margin-top:20px; color:" + textColor + ";'>";
+        _html += "<canvas  id='" + content_id + "_img' class='bilibili_txt_1'  src='' style='top:" + topVal + "px; color: white;position:absolute;width: 6rem;height: 3rem;right:0px; margin-top:20px; color:" + textColor + ";'>";
     }
     //清空弹幕输入框内容
     bilibiliTxt.val("");
     //添加到弹幕板上
     $("#remoteVideos").append(_html)
+    draw(content_id+"_img");
     //调用启动动画效果
     bilibiliAnimation(content_id,div_id);
 }
