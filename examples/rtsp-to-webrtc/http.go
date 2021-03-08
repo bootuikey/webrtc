@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/deepch/vdk/format/rtsp"
 	"log"
 	"math/rand"
 	"net/http"
@@ -52,12 +51,14 @@ func serveHTTP() {
 			"version":  time.Now().String(),
 		})
 	})
-	router.POST("/connectRtsp", connectRtspUrl)
+	//router.POST("/connectRtsp", connectRtspUrl)
 	router.POST("/recive", reciver)
 	router.GET("/codec/:uuid", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
+		log.Println("++++++++++++++++++++", c.Param("uuid"))
 		if Config.ext(c.Param("uuid")) {
 			codecs := Config.coGe(c.Param("uuid"))
+			log.Println("W++++++++++++++++++++", codecs)
 			if codecs == nil {
 				return
 			}
@@ -73,6 +74,7 @@ func serveHTTP() {
 	})
 	//router.StaticFS("/static", http.Dir("web/static"))
 	err := router.Run(Config.Server.HTTPPort)
+	//err := router.Run()
 	if err != nil {
 		log.Fatalln("Start HTTP Server error", err)
 	}
@@ -81,11 +83,11 @@ func serveHTTP() {
 /**
 启动连接rtsp
 */
-func connectRtspUrl(c *gin.Context) {
-	c.Header("Access-Control-Allow-Origin", "*")
-	url := c.PostForm("url")
-	serveStreams1(url)
-}
+//func connectRtspUrl(c *gin.Context) {
+//	c.Header("Access-Control-Allow-Origin", "*")
+//	url := c.PostForm("url")
+//	serveStreams1(url)
+//}
 
 func reciver(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
@@ -213,7 +215,7 @@ func reciver(c *gin.Context) {
 				audioTrack, err = peerConnection.NewTrack(webrtc.DefaultPayloadTypePCMU, rand.Uint32(), "audio", suuid+"audio")
 			}
 			if err != nil {
-				log.Println(err)
+				log.Println("++++++++++++信息异常:", err)
 				return
 			}
 			_, err = peerConnection.AddTransceiverFromTrack(audioTrack,
@@ -227,7 +229,7 @@ func reciver(c *gin.Context) {
 			}
 			_, err = peerConnection.AddTrack(audioTrack)
 			if err != nil {
-				log.Println(err)
+				log.Println("++++++++++++信息异常:", err)
 				return
 			}
 		}
@@ -279,6 +281,7 @@ func reciver(c *gin.Context) {
 					log.Println("Client Close Keep-Alive Timer")
 					peerConnection.Close()
 				case <-control:
+					log.Println("++++++++++++:", control)
 					return
 				case pck := <-ch:
 					//timer1.Reset(2 * time.Second)
@@ -290,7 +293,6 @@ func reciver(c *gin.Context) {
 					}
 					if pck.IsKeyFrame {
 						pck.Data = append([]byte("\000\000\001"+string(sps)+"\000\000\001"+string(pps)+"\000\000\001"), pck.Data[4:]...)
-
 					} else {
 						pck.Data = pck.Data[4:]
 					}
@@ -302,12 +304,14 @@ func reciver(c *gin.Context) {
 						samples := uint32(90000 / 1000 * Vts.Milliseconds())
 						err := videoTrack.WriteSample(media.Sample{Data: pck.Data, Samples: samples})
 						if err != nil {
+							log.Println("++++++++++++:", err)
 							return
 						}
 						Vpre = pck.Time
 					} else if pck.Idx == 1 && audioTrack != nil {
 						err := audioTrack.WriteSample(media.Sample{Data: pck.Data, Samples: uint32(len(pck.Data))})
 						if err != nil {
+							log.Println("++++++++++++:", err)
 							return
 						}
 					}
@@ -317,44 +321,49 @@ func reciver(c *gin.Context) {
 		}()
 		//	}
 		//})
+		log.Println("++++++++++++")
 		return
 	}
 }
 
-func serveStreams1(url string) bool {
-	name := "demo1"
-	log.Println(name, "connect", url)
-	rtsp.DebugRtsp = true
-	session, err := rtsp.Dial(url)
-	if err != nil {
-		log.Println(name, err)
-		return false
-		time.Sleep(5 * time.Second)
-	}
-	session.RtpKeepAliveTimeout = 10 * time.Second
-	if err != nil {
-		log.Println(name, err)
-		time.Sleep(5 * time.Second)
-		return false
-	}
-	codec, err := session.Streams()
-	if err != nil {
-		log.Println(name, err)
-		time.Sleep(5 * time.Second)
-	}
-	Config.coAd(name, codec)
-	for {
-		pkt, err := session.ReadPacket()
-		if err != nil {
-			log.Println(name, err)
-			break
-		}
-		Config.cast(name, pkt)
-	}
-	err = session.Close()
-	if err != nil {
-		log.Println("session Close error", err)
-	}
-	time.Sleep(5 * time.Second)
-	return true
-}
+//func serveStreams1(url string) bool {
+//	name := "demo1"
+//	log.Println(name, "connect", url)
+//	log.Println("=============session111")
+//	rtsp.DebugRtsp = true
+//	log.Println("=============session")
+//	session, err := rtsp.Dial(url)
+//	if err != nil {
+//		log.Println(name, err)
+//		return false
+//		time.Sleep(5 * time.Second)
+//	}
+//	log.Println("=============1")
+//	session.RtpKeepAliveTimeout = 10 * time.Second
+//	if err != nil {
+//		log.Println(name, err)
+//		time.Sleep(5 * time.Second)
+//		return false
+//	}
+//	codec, err := session.Streams()
+//	if err != nil {
+//		log.Println(name, err)
+//		time.Sleep(5 * time.Second)
+//	}
+//	Config.coAd(name, codec)
+//	for {
+//		pkt, err := session.ReadPacket()
+//		log.Println("++++++++++readPacket", pkt)
+//		if err != nil {
+//			log.Println(name, err)
+//			break
+//		}
+//		Config.cast(name, pkt)
+//	}
+//	err = session.Close()
+//	if err != nil {
+//		log.Println("session Close error", err)
+//	}
+//	time.Sleep(5 * time.Second)
+//	return true
+//}
