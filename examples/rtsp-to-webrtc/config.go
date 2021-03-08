@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"github.com/deepch/RTSPtoWebRTC/asset"
 	"log"
 
 	"github.com/deepch/vdk/av"
@@ -37,7 +37,7 @@ type viwer struct {
 
 func loadConfig() *ConfigST {
 	var tmp ConfigST
-	data, err := ioutil.ReadFile("config.json")
+	data, err := asset.Asset("config/config.json")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -49,6 +49,7 @@ func loadConfig() *ConfigST {
 		v.Cl = make(map[string]viwer)
 		tmp.Streams[i] = v
 	}
+	log.Println("++++++++++++++++++++", &tmp)
 	return &tmp
 }
 

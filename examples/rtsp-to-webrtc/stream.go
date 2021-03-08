@@ -44,8 +44,8 @@ func serveStreams() {
 				if err != nil {
 					log.Println("session Close error", err)
 				}
-				log.Println(name, "reconnect wait 5s")
-				time.Sleep(5 * time.Second)
+				log.Println(name, "reconnect wait 20s")
+				time.Sleep(20 * time.Second)
 			}
 		}(k, v.URL)
 	}

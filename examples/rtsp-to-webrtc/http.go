@@ -109,21 +109,17 @@ func reciver(c *gin.Context) {
 		sps := codecs[0].(h264parser.CodecData).SPS()
 		pps := codecs[0].(h264parser.CodecData).PPS()
 		/*
-
 			Recive Remote SDP as Base64
-
 		*/
 		sd, err := base64.StdEncoding.DecodeString(data)
+		log.Println("++++++++++++++++++sd", sd)
 		if err != nil {
 			log.Println("DecodeString error", err)
 			return
 		}
 		/*
-
 			Create Media MediaEngine
-
 		*/
-
 		mediaEngine := webrtc.MediaEngine{}
 		offer := webrtc.SessionDescription{
 			Type: webrtc.SDPTypeOffer,
@@ -172,10 +168,11 @@ func reciver(c *gin.Context) {
 		*/
 		timer1 := time.NewTimer(time.Second * 2)
 		peerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
+			log.Println("++++++++++++Message")
 			// Register text message handling
 			d.OnMessage(func(msg webrtc.DataChannelMessage) {
-				//fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
-				timer1.Reset(2 * time.Second)
+				//log.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+				timer1.Reset(10 * time.Second)
 			})
 		})
 		/*
@@ -253,6 +250,7 @@ func reciver(c *gin.Context) {
 			return
 		}
 		control := make(chan bool, 10)
+
 		//peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		//	log.Printf("Connection State has changed %s \n", connectionState.String())
 		//	if connectionState != webrtc.ICEConnectionStateConnected {
@@ -325,45 +323,3 @@ func reciver(c *gin.Context) {
 		return
 	}
 }
-
-//func serveStreams1(url string) bool {
-//	name := "demo1"
-//	log.Println(name, "connect", url)
-//	log.Println("=============session111")
-//	rtsp.DebugRtsp = true
-//	log.Println("=============session")
-//	session, err := rtsp.Dial(url)
-//	if err != nil {
-//		log.Println(name, err)
-//		return false
-//		time.Sleep(5 * time.Second)
-//	}
-//	log.Println("=============1")
-//	session.RtpKeepAliveTimeout = 10 * time.Second
-//	if err != nil {
-//		log.Println(name, err)
-//		time.Sleep(5 * time.Second)
-//		return false
-//	}
-//	codec, err := session.Streams()
-//	if err != nil {
-//		log.Println(name, err)
-//		time.Sleep(5 * time.Second)
-//	}
-//	Config.coAd(name, codec)
-//	for {
-//		pkt, err := session.ReadPacket()
-//		log.Println("++++++++++readPacket", pkt)
-//		if err != nil {
-//			log.Println(name, err)
-//			break
-//		}
-//		Config.cast(name, pkt)
-//	}
-//	err = session.Close()
-//	if err != nil {
-//		log.Println("session Close error", err)
-//	}
-//	time.Sleep(5 * time.Second)
-//	return true
-//}
