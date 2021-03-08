@@ -75,8 +75,9 @@ Audio Codecs Supported: pcm alaw and pcm mulaw
 2:打包命令: go build
 3:启动参数：RTSPtoWebRTC.exe -rtspurl rtsp://101.200.83.51/test
 
+#config 配置文件打包命令
+go-bindata -pkg=asset -o=./asset/bindata.go ./config/
 
+#ffmpeg 发送视频流命令
 ffmpeg -re -i D:\a.mp4 -rtsp_transport tcp -vcodec h264 -f rtsp rtsp://101.200.83.51/test
-
-
 ffmpeg -re -i D:\a.webm -rtsp_transport tcp -vcodec h264 -f rtsp rtsp://101.200.83.51/test
