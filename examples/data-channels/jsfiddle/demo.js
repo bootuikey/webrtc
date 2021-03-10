@@ -3,7 +3,7 @@
 let pc = new RTCPeerConnection({
   iceServers: [
     {
-      urls: 'stun:stun.l.google.com:19302'
+      urls: 'stun:101.200.83.51:3478'
     }
   ]
 })

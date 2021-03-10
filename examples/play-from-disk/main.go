@@ -1,17 +1,23 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"github.com/pion/webrtc/v3/pkg/media/ivfreader"
 	"io"
+	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/pion/randutil"
 	"github.com/pion/webrtc/v3"
-	"github.com/pion/webrtc/v3/examples/internal/signal"
 	"github.com/pion/webrtc/v3/pkg/media"
-	"github.com/pion/webrtc/v3/pkg/media/ivfreader"
 	"github.com/pion/webrtc/v3/pkg/media/oggreader"
 )
 
@@ -34,7 +40,7 @@ func main() {
 
 	// Wait for the offer to be pasted
 	offer := webrtc.SessionDescription{}
-	signal.Decode(signal.MustReadStdin(), &offer)
+	Decode(MustReadStdin(), &offer)
 
 	// We make our own mediaEngine so we can place the sender's codecs in it.  This because we must use the
 	// dynamic media type from the sender in our answer. This is not required if we are the offerer
@@ -48,7 +54,7 @@ func main() {
 	peerConnection, err := api.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
+				URLs: []string{"stun:101.200.83.51:3478"},
 			},
 		},
 	})
@@ -66,40 +72,9 @@ func main() {
 		if _, addTrackErr = peerConnection.AddTrack(videoTrack); addTrackErr != nil {
 			panic(addTrackErr)
 		}
-
 		go func() {
-			// Open a IVF file and start reading using our IVFReader
-			file, ivfErr := os.Open(videoFileName)
-			if ivfErr != nil {
-				panic(ivfErr)
-			}
-
-			ivf, header, ivfErr := ivfreader.NewWith(file)
-			if ivfErr != nil {
-				panic(ivfErr)
-			}
-
-			// Wait for connection established
-			<-iceConnectedCtx.Done()
-
-			// Send our video file frame at a time. Pace our sending so we send it at the same speed it should be played back as.
-			// This isn't required since the video is timestamped, but we will such much higher loss if we send all at once.
-			sleepTime := time.Millisecond * time.Duration((float32(header.TimebaseNumerator)/float32(header.TimebaseDenominator))*1000)
-			for {
-				frame, _, ivfErr := ivf.ParseNextFrame()
-				if ivfErr == io.EOF {
-					fmt.Printf("All video frames parsed and sent")
-					os.Exit(0)
-				}
-
-				if ivfErr != nil {
-					panic(ivfErr)
-				}
-
-				time.Sleep(sleepTime)
-				if ivfErr = videoTrack.WriteSample(media.Sample{Data: frame, Samples: 90000}); ivfErr != nil {
-					panic(ivfErr)
-				}
+			for true {
+				loopVideo(videoTrack)
 			}
 		}()
 	}
@@ -191,10 +166,45 @@ func main() {
 	<-gatherComplete
 
 	// Output the answer in base64 so we can paste it in browser
-	fmt.Println(signal.Encode(*peerConnection.LocalDescription()))
+	fmt.Println(Encode(*peerConnection.LocalDescription()))
 
 	// Block forever
 	select {}
+}
+
+func loopVideo(videoTrack *webrtc.Track) {
+	// Open a IVF file and start reading using our IVFReader
+	file, ivfErr := os.Open(videoFileName)
+	if ivfErr != nil {
+		panic(ivfErr)
+	}
+
+	ivf, header, ivfErr := ivfreader.NewWith(file)
+	if ivfErr != nil {
+		panic(ivfErr)
+	}
+
+	// Wait for connection established
+	// Send our video file frame at a time. Pace our sending so we send it at the same speed it should be played back as.
+	// This isn't required since the video is timestamped, but we will such much higher loss if we send all at once.
+	sleepTime := time.Millisecond * time.Duration((float32(header.TimebaseNumerator)/float32(header.TimebaseDenominator))*1000)
+	for {
+		frame, _, ivfErr := ivf.ParseNextFrame()
+		if ivfErr == io.EOF {
+			fmt.Printf("All video frames parsed and sent")
+			//os.Exit(0)
+			break
+		}
+		if ivfErr != nil {
+			fmt.Printf("=======")
+			panic(ivfErr)
+		}
+
+		time.Sleep(sleepTime)
+		if ivfErr = videoTrack.WriteSample(media.Sample{Data: frame, Samples: 90000}); ivfErr != nil {
+			panic(ivfErr)
+		}
+	}
 }
 
 // Search for Codec PayloadType
@@ -207,4 +217,99 @@ func getPayloadType(m webrtc.MediaEngine, codecType webrtc.RTPCodecType, codecNa
 		}
 	}
 	panic(fmt.Sprintf("Remote peer does not support %s", codecName))
+}
+
+// Allows compressing offer/answer to bypass terminal input limits.
+const compress = false
+
+// MustReadStdin blocks until input is received from stdin
+func MustReadStdin() string {
+	r := bufio.NewReader(os.Stdin)
+
+	var in string
+	for {
+		var err error
+		in, err = r.ReadString('\n')
+		if err != io.EOF {
+			if err != nil {
+				panic(err)
+			}
+		}
+		in = strings.TrimSpace(in)
+		if len(in) > 0 {
+			break
+		}
+	}
+
+	fmt.Println("")
+
+	return in
+}
+
+// Encode encodes the input in base64
+// It can optionally zip the input before encoding
+func Encode(obj interface{}) string {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+
+	if compress {
+		b = zip(b)
+	}
+
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+// Decode decodes the input from base64
+// It can optionally unzip the input after decoding
+func Decode(in string, obj interface{}) {
+	b, err := base64.StdEncoding.DecodeString(in)
+	if err != nil {
+		panic(err)
+	}
+
+	if compress {
+		b = unzip(b)
+	}
+
+	err = json.Unmarshal(b, obj)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func zip(in []byte) []byte {
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	_, err := gz.Write(in)
+	if err != nil {
+		panic(err)
+	}
+	err = gz.Flush()
+	if err != nil {
+		panic(err)
+	}
+	err = gz.Close()
+	if err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}
+
+func unzip(in []byte) []byte {
+	var b bytes.Buffer
+	_, err := b.Write(in)
+	if err != nil {
+		panic(err)
+	}
+	r, err := gzip.NewReader(&b)
+	if err != nil {
+		panic(err)
+	}
+	res, err := ioutil.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+	return res
 }

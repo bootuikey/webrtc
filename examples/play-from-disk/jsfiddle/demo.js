@@ -3,12 +3,12 @@
 let pc = new RTCPeerConnection({
   iceServers: [
     {
-      urls: 'stun:stun.l.google.com:19302'
+      urls: 'stun:101.200.83.51:3478'
     }
   ]
 })
 let log = msg => {
-  document.getElementById('div').innerHTML += msg + '<br>'
+  document.getElementById('div').innerHTML += msg + 'ffff<br>'
 }
 
 pc.ontrack = function (event) {
