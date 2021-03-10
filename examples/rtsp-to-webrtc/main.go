@@ -1,13 +1,13 @@
 package main
 
 import (
-	_ "github.com/deepch/vdk/format/rtsp"
+	"github.com/deepch/vdk/format/rtsp"
 	"log"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
-	_ "time"
+	"time"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	}
 	if flag {
 		go serveHTTP()
-		go serveStreams()
+		go getRtspServeStreams(rtspUrlName)
 		sigs := make(chan os.Signal, 1)
 		done := make(chan bool, 1)
 		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -47,5 +47,48 @@ func main() {
 		log.Println("Server Start Awaiting Signal")
 		<-done
 		log.Println("Exiting")
+	}
+}
+
+func getRtspServeStreams(url string) bool {
+	name := "demo1"
+	for {
+		log.Println(name, "connect", url)
+		rtsp.DebugRtsp = true
+		session, err := rtsp.DialTimeout(url, 5*time.Second)
+		if err != nil {
+			log.Println(name, err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		session.RtpKeepAliveTimeout = 10 * time.Second
+		if err != nil {
+			log.Println(name, err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		codec, err := session.Streams()
+		if err != nil {
+			log.Println(name, err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		Config.coAd(name, codec)
+		for {
+			pkt, err := session.ReadPacket()
+			if err != nil {
+				log.Println(name, err)
+				break
+			}
+			Config.cast(name, pkt)
+
+			log.Println(name, "=====pkt size", len(pkt.Data))
+		}
+		err = session.Close()
+		if err != nil {
+			log.Println("session Close error", err)
+		}
+		log.Println(name, "reconnect wait 20s")
+		time.Sleep(20 * time.Second)
 	}
 }

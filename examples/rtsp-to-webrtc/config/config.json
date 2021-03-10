@@ -4,7 +4,7 @@
   },
   "streams": {
     "demo1": {
-      "url": "rtsp://101.200.83.51/test"
+      "url": "rtsp://101.200.83.51/7E8C32EB-CD90-431D-AEDD-890C7CC2BB10.sdp"
     }
   }
 }

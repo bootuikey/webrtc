@@ -73,7 +73,7 @@ Audio Codecs Supported: pcm alaw and pcm mulaw
 
 1:go-bindata -o=./asset/asset.go -pkg=asset config/...
 2:打包命令: go build
-3:启动参数：RTSPtoWebRTC.exe -rtspurl rtsp://101.200.83.51/test
+3:启动参数：RTSPtoWebRTC.exe -rtspurl rtsp://101.200.83.51/BEBC7703-5607-45C7-AC0A-F397F1226328.sdp
 
 #config 配置文件打包命令
 go-bindata -pkg=asset -o=./asset/bindata.go ./config/

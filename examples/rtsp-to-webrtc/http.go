@@ -145,7 +145,6 @@ func reciver(c *gin.Context) {
 		if payloadType != 126 {
 			log.Println("Video might not work with codec", payloadType)
 		}
-		log.Println("Work payloadType", payloadType)
 		api := webrtc.NewAPI(webrtc.WithMediaEngine(mediaEngine))
 
 		peerConnection, err := api.NewPeerConnection(webrtc.Configuration{
@@ -300,6 +299,14 @@ func reciver(c *gin.Context) {
 							Vts = pck.Time - Vpre
 						}
 						samples := uint32(90000 / 1000 * Vts.Milliseconds())
+						log.Println("+++++++++++++++++++++++++++++pck.IsKeyFrame", pck.IsKeyFrame)
+						log.Println("+++++++++++++++++++++++++++++pck.Idx", pck.Idx)
+						log.Println("+++++++++++++++++++++++++++++pck.Data", len(pck.Data))
+						if len(pck.Data) == 0 {
+							log.Println("+++++++++++++++++++++++++++++pck.Data", len(pck.Data))
+							continue
+						}
+						log.Println("+++++++++++++++++++++++++++++samples", samples)
 						err := videoTrack.WriteSample(media.Sample{Data: pck.Data, Samples: samples})
 						if err != nil {
 							log.Println("++++++++++++:", err)
